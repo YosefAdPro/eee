@@ -1,0 +1,93 @@
+#!/bin/bash
+
+# reset shell colors
+tput init
+
+# https://stackoverflow.com/questions/59895/how-to-get-the-source-directory-of-a-bash-script-from-within-the-script-itself
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  PROJECT_ROOT="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$PROJECT_ROOT/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+PROJECT_ROOT="$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )"
+
+# required imports
+source "${PROJECT_ROOT}"/variables/manifest.sh
+source "${PROJECT_ROOT}"/utils/manifest.sh
+source "${PROJECT_ROOT}"/lib/manifest.sh
+
+# user configs file
+if [[ ! -e "${PROJECT_ROOT}"/config ]]; then
+  cat << EOF > "${PROJECT_ROOT}"/config
+deploy_password=${deploy_password}
+mysql_root_password=${mysql_root_password}
+db_pass=${db_pass}
+EOF
+fi
+
+# this file has passwords
+sudo su - root <<EOF
+chown root:root "${PROJECT_ROOT}"/config
+chmod 700 "${PROJECT_ROOT}"/config
+EOF
+source "${PROJECT_ROOT}"/config
+
+# interactive CLI
+inquiry_options
+
+# dependencies related
+system_update
+system_node_install
+system_pm2_install
+system_docker_install
+system_puppeteer_dependencies
+system_snapd_install
+system_nginx_install
+system_certbot_install
+
+# # system config
+system_create_user
+
+for i in "${!FRONTEND_URLS[@]}"; do
+
+  available_port=0
+
+  frontend_url="${FRONTEND_URLS[i]}"
+  available_ports_from 3333
+  frontend_port=$available_port
+
+  backend_url="${BACKEND_URLS[i]}"
+  available_ports_from 8080
+  backend_port=$available_port
+
+  available_ports_from 3306
+  db_port=$available_port
+  db_name="${DB_NAMES[i]}"
+  db_pass="${DB_PASSWORDS[i]}"
+
+  # backend related
+  system_git_clone "${frontend_url}"
+  backend_set_env "${backend_port}" "${db_name}" "${db_pass}" "${frontend_url}" "${backend_url}"
+  backend_make_sequelize_config_file "${db_port}"
+  backend_mysql_create "${db_port}" "${db_name}" "${db_pass}"
+  backend_node_dependencies "${frontend_url}"
+  backend_node_build "${frontend_url}"
+  backend_db_migrate "${frontend_url}"
+  backend_db_seed "${frontend_url}"
+  backend_start_pm2 "${frontend_url}" "${backend_url}"
+  backend_nginx_setup "${backend_port}" "${backend_url}"
+
+  # # frontend related
+  frontend_set_env "${frontend_url}" "${backend_url}"
+  frontend_make_server_file "${frontend_port}" "${frontend_url}"
+  frontend_node_dependencies "${frontend_url}"
+  frontend_node_build "${frontend_url}"
+  frontend_start_pm2 "${frontend_url}"
+  frontend_nginx_setup "${frontend_port}" "${frontend_url}"
+
+  # # network related
+  system_nginx_conf
+  system_nginx_restart
+  system_certbot_setup "${frontend_url}" "${backend_url}"
+done
