@@ -18,7 +18,7 @@ frontend_node_dependencies() {
   sleep 2
 
   sudo su - deploy <<EOF
-  cd /home/deploy/whaticket/$frontend_url/frontend
+  cd /home/deploy/adpro-wma/$frontend_url/frontend
   npm install
 EOF
 
@@ -41,7 +41,7 @@ frontend_node_build() {
   sleep 2
 
   sudo su - deploy <<EOF
-  cd /home/deploy/whaticket/$frontend_url/frontend
+  cd /home/deploy/adpro-wma/$frontend_url/frontend
   npm install
   npm run build
 EOF
@@ -64,7 +64,7 @@ frontend_update() {
   sudo su - deploy <<EOF
   cd /home/deploy/whaticket
   git pull
-  cd /home/deploy/whaticket/frontend
+  cd /home/deploy/adpro-wma/frontend
   npm install
   rm -rf build
   npm run build
@@ -92,7 +92,7 @@ frontend_set_env() {
   sleep 2
 
 sudo su - deploy << EOF
-  cat <<[-]EOF > /home/deploy/whaticket/$frontend_url/frontend/.env
+  cat <<[-]EOF > /home/deploy/adpro-wma/$frontend_url/frontend/.env
 REACT_APP_BACKEND_URL=https://${backend_url}
 [-]EOF
 EOF
@@ -116,7 +116,7 @@ frontend_start_pm2() {
   sleep 2
 
   sudo su - deploy <<EOF
-  cd /home/deploy/whaticket/$frontend_url/frontend
+  cd /home/deploy/adpro-wma/$frontend_url/frontend
   pm2 start server.js --name $frontend_url
   pm2 save
 EOF
@@ -184,7 +184,7 @@ frontend_make_server_file() {
 
 sudo su - deploy << EOF
 
-cat > /home/deploy/whaticket/$frontend_url/frontend/server.js << 'END'
+cat > /home/deploy/adpro-wma/$frontend_url/frontend/server.js << 'END'
 //simple express server to run frontend production build;
 const express = require("express");
 const path = require("path");
