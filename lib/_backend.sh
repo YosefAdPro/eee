@@ -59,7 +59,7 @@ backend_set_env() {
   jwt_refresh_secret=$(openssl rand -base64 32)
 
 sudo su - deploy << EOF
-  cat <<[-]EOF > /home/deploy/whaticket/$frontend_url/backend/.env
+  cat <<[-]EOF > /home/deploy/adpro-wma/$frontend_url/backend/.env
 NODE_ENV=
 BACKEND_URL=https://${backend_url}
 FRONTEND_URL=https://${frontend_url}
@@ -96,7 +96,7 @@ backend_node_dependencies() {
   sleep 2
 
   sudo su - deploy <<EOF
-  cd /home/deploy/whaticket/$frontend_url/backend
+  cd /home/deploy/adpro-wma/$frontend_url/backend
   npm install
 EOF
 
@@ -119,7 +119,7 @@ backend_node_build() {
   sleep 2
 
   sudo su - deploy <<EOF
-  cd /home/deploy/whaticket/$frontend_url/backend
+  cd /home/deploy/adpro-wma/$frontend_url/backend
   npm install
   npm run build
 EOF
@@ -142,7 +142,7 @@ backend_update() {
   sudo su - deploy <<EOF
   cd /home/deploy/whaticket
   git pull
-  cd /home/deploy/whaticket/backend
+  cd /home/deploy/adpro-wma/backend
   npm install
   rm -rf dist 
   npm run build
@@ -170,7 +170,7 @@ backend_db_migrate() {
   sleep 2
 
   sudo su - deploy <<EOF
-  cd /home/deploy/whaticket/$frontend_url/backend
+  cd /home/deploy/adpro-wma/$frontend_url/backend
   npx sequelize db:migrate
 EOF
 
@@ -193,7 +193,7 @@ backend_db_seed() {
   sleep 2
 
   sudo su - deploy <<EOF
-  cd /home/deploy/whaticket/$frontend_url/backend
+  cd /home/deploy/adpro-wma/$frontend_url/backend
   npx sequelize db:seed:all
 EOF
 
@@ -218,7 +218,7 @@ backend_start_pm2() {
   sleep 2
 
   sudo su - deploy <<EOF
-  cd /home/deploy/whaticket/$frontend_url/backend
+  cd /home/deploy/adpro-wma/$frontend_url/backend
   pm2 start dist/server.js --name $backend_url
 EOF
 
@@ -284,7 +284,7 @@ backend_make_sequelize_config_file() {
 
 sudo su - deploy << EOF
 
-cat > /home/deploy/whaticket/$frontend_url/backend/src/config/database.ts << 'END'
+cat > /home/deploy/adpro-wma/$frontend_url/backend/src/config/database.ts << 'END'
 require("../bootstrap");
 
 module.exports = {
