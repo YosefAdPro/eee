@@ -246,6 +246,9 @@ sudo su - root << EOF
 cat > /etc/nginx/sites-available/$backend_hostname << 'END'
 server {
   server_name $backend_hostname;
+   if ($allowed_country = no) {
+        return 503;
+    }
 
   location / {
     proxy_pass http://127.0.0.1:$port;
